@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>图标生成器 — DeepSeek PWA</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+      max-width: 500px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f0f4ff;
+      text-align: center;
+    }
+    h1 { font-size: 20px; margin-bottom: 8px; }
+    p { color: #666; font-size: 14px; margin-bottom: 24px; }
+    .preview-area {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+    .preview-item {
+      text-align: center;
+    }
+    .preview-item canvas {
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    }
+    .preview-item span {
+      display: block;
+      font-size: 11px;
+      color: #999;
+      margin-top: 4px;
+    }
+    button {
+      padding: 14px 32px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      background: #1a56db;
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(26,86,219,0.3);
+    }
+    button:active { transform: scale(0.97); }
+    button:disabled { opacity: 0.5; pointer-events: none; }
+    .status {
+      margin-top: 16px;
+      font-size: 13px;
+      color: #059669;
+      min-height: 24px;
+    }
+    .instructions {
+      margin-top: 32px;
+      text-align: left;
+      background: white;
+      padding: 16px 20px;
+      border-radius: 12px;
+      font-size: 13px;
+      color: #444;
+      line-height: 1.8;
+    }
+  </style>
+</head>
+<body>
+  <h1>🐋 生成 PWA 图标</h1>
+  <p>点击按钮即可生成所有尺寸的图标并自动下载</p>
+
+  <div class="preview-area">
+    <div class="preview-item">
+      <canvas id="preview192" width="192" height="192"></canvas>
+      <span>192×192</span>
+    </div>
+    <div class="preview-item">
+      <canvas id="preview512" width="512" height="512"></canvas>
+      <span>512×512</span>
+    </div>
+  </div>
+
+  <button id="generateBtn" onclick="generateAllIcons()">🎨 生成并下载所有图标</button>
+  <div class="status" id="status"></div>
+
+  <div class="instructions">
+    <strong>📋 使用说明：</strong><br>
+    1. 点击上方按钮下载所有图标<br>
+    2. 将下载的 PNG 文件放入 <code>icons/</code> 文件夹<br>
+    3. 文件名应匹配：<code>icon-72.png</code> ~ <code>icon-512.png</code><br>
+    4. 如果浏览器阻止了多次下载，请允许「下载多个文件」
+  </div>
+
+  <script>
+    /**
+     * 在 Canvas 上绘制 DeepSeek 风格的鲸鱼图标
+     */
+    function drawIcon(canvas, size) {
+      const ctx = canvas.getContext('2d');
+      const s = size;
+
+      // 背景：蓝色渐变
+      const bgGrad = ctx.createLinearGradient(0, 0, s, s);
+      bgGrad.addColorStop(0, '#1a56db');
+      bgGrad.addColorStop(0.5, '#3b82f6');
+      bgGrad.addColorStop(1, '#06b6d4');
+      ctx.fillStyle = bgGrad;
+      ctx.beginPath();
+      ctx.roundRect(0, 0, s, s, s * 0.22);
+      ctx.fill();
+
+      // 鲸鱼身体（简化曲线）
+      const cx = s * 0.5;
+      const cy = s * 0.48;
+      const scale = s * 0.28;
+
+      ctx.fillStyle = '#ffffff';
+
+      // 绘制鲸鱼形状
+      ctx.beginPath();
+      // 从头顶开始
+      ctx.moveTo(cx - scale * 0.3, cy - scale * 0.6);
+      // 头顶到背部
+      ctx.quadraticCurveTo(cx, cy - scale * 1.1, cx + scale * 0.9, cy - scale * 0.4);
+      // 背到尾
+      ctx.quadraticCurveTo(cx + scale * 1.35, cy - scale * 0.1, cx + scale * 1.0, cy + scale * 0.2);
+      // 尾鳍上
+      ctx.lineTo(cx + scale * 1.4, cy + scale * 0.5);
+      // 尾鳍中
+      ctx.lineTo(cx + scale * 0.8, cy + scale * 0.1);
+      // 尾鳍下
+      ctx.lineTo(cx + scale * 1.35, cy - scale * 0.5);
+      // 回到尾部
+      ctx.lineTo(cx + scale * 0.7, cy + scale * 0.15);
+      // 肚子
+      ctx.quadraticCurveTo(cx + scale * 0.1, cy + scale * 0.6, cx - scale * 0.8, cy + scale * 0.1);
+      // 下巴到头
+      ctx.quadraticCurveTo(cx - scale * 0.4, cy - scale * 0.3, cx - scale * 0.3, cy - scale * 0.6);
+      ctx.fill();
+
+      // 鲸鱼眼睛
+      const eyeX = cx - scale * 0.05;
+      const eyeY = cy - scale * 0.25;
+      const eyeR = scale * 0.08;
+
+      ctx.fillStyle = '#1a56db';
+      ctx.beginPath();
+      ctx.arc(eyeX, eyeY, eyeR, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 眼睛高光
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(eyeX - eyeR * 0.25, eyeY - eyeR * 0.25, eyeR * 0.35, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 腹部波纹线
+      ctx.strokeStyle = 'rgba(26, 86, 219, 0.3)';
+      ctx.lineWidth = scale * 0.03;
+      ctx.beginPath();
+      ctx.moveTo(cx - scale * 0.4, cy + scale * 0.1);
+      ctx.quadraticCurveTo(cx + scale * 0.1, cy + scale * 0.4, cx + scale * 0.5, cy + scale * 0.05);
+      ctx.stroke();
+
+      // 喷水
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+      ctx.lineWidth = scale * 0.04;
+      ctx.lineCap = 'round';
+      const spoutX = cx + scale * 0.05;
+      const spoutBaseY = cy - scale * 1.0;
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        const offsetX = (i - 1) * scale * 0.15;
+        const height = scale * (0.25 + Math.random() * 0.15);
+        ctx.moveTo(spoutX, spoutBaseY);
+        ctx.quadraticCurveTo(spoutX + offsetX, spoutBaseY - height * 0.6, spoutX + offsetX * 1.2, spoutBaseY - height);
+        ctx.stroke();
+      }
+    }
+
+    /** 生成并下载单个图标 */
+    function downloadIcon(size) {
+      return new Promise((resolve) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        drawIcon(canvas, size);
+
+        canvas.toBlob((blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `icon-${size}.png`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          setTimeout(resolve, 200);
+        }, 'image/png');
+      });
+    }
+
+    /** 生成所有图标 */
+    async function generateAllIcons() {
+      const btn = document.getElementById('generateBtn');
+      const status = document.getElementById('status');
+      const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+
+      btn.disabled = true;
+      status.textContent = '⏳ 正在生成图标...';
+
+      // 先绘制预览
+      drawIcon(document.getElementById('preview192'), 192);
+      drawIcon(document.getElementById('preview512'), 512);
+
+      // 逐个下载
+      for (const size of sizes) {
+        status.textContent = `⏳ 生成中... (${size}×${size})`;
+        await downloadIcon(size);
+      }
+
+      status.textContent = `✅ 完成！已下载 ${sizes.length} 个图标文件`;
+      btn.disabled = false;
+
+      alert('所有图标已生成！\n\n请将下载的 8 个 PNG 文件放入项目的 icons/ 文件夹中。\n\n文件列表：\n' + sizes.map(s => `icon-${s}.png`).join('\n'));
+    }
+
+    // 页面加载时绘制预览
+    window.addEventListener('DOMContentLoaded', () => {
+      drawIcon(document.getElementById('preview192'), 192);
+      drawIcon(document.getElementById('preview512'), 512);
+    });
+  </script>
+</body>
+</html>

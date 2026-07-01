@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#1a56db">
+  <meta name="description" content="DeepSeek Token 用量与余额查询工具">
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- iOS Safari PWA 专属标签 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="DeepSeek 余额">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <!-- iPhone X+ 安全区域适配 -->
+  <meta name="apple-mobile-web-app-viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+  <!-- 微软 Tile -->
+  <meta name="msapplication-TileColor" content="#1a56db">
+  <meta name="msapplication-TileImage" content="icons/icon-192.png">
+
+  <title>DeepSeek 余额查询</title>
+
+  <!-- 样式 -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- ========== 设置页面 ========== -->
+  <div id="setupPage" class="page">
+    <div class="setup-container">
+      <div class="logo-area">
+        <div class="logo-icon">🐋</div>
+        <h1>DeepSeek 余额查询</h1>
+        <p class="subtitle">实时查看 Token 用量和账户余额</p>
+      </div>
+
+      <div class="setup-card">
+        <h2>设置 API Key</h2>
+        <p class="hint">请输入你的 DeepSeek API Key 以获取账户信息</p>
+
+        <div class="input-group">
+          <label for="apiKeyInput">API Key</label>
+          <div class="password-input-wrapper">
+            <input
+              type="password"
+              id="apiKeyInput"
+              placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxx"
+              autocomplete="off"
+            >
+            <button type="button" id="toggleVisibilityBtn" class="icon-btn" title="显示/隐藏">
+              👁️
+            </button>
+          </div>
+        </div>
+
+        <div class="setup-actions">
+          <button type="button" id="testBtn" class="btn btn-outline">🔍 测试连接</button>
+          <button type="button" id="saveBtn" class="btn btn-primary">💾 保存并查看</button>
+        </div>
+
+        <div id="testResult" class="test-result hidden"></div>
+
+        <div class="setup-footer">
+          <p>💡 <strong>如何获取 API Key？</strong></p>
+          <ol>
+            <li>访问 <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener">platform.deepseek.com/api_keys</a></li>
+            <li>登录后点击「创建 API Key」</li>
+            <li>复制 Key 粘贴到上方输入框</li>
+          </ol>
+          <p class="privacy-note">🔒 你的 API Key 仅保存在手机本地，不会上传到任何服务器</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 仪表盘页面 ========== -->
+  <div id="dashboardPage" class="page hidden">
+    <div class="dashboard-container">
+      <!-- 顶部导航 -->
+      <header class="dashboard-header">
+        <div class="header-left">
+          <div class="header-icon">🐋</div>
+          <div>
+            <h1 class="header-title">DeepSeek</h1>
+            <p class="header-subtitle">账户余额查询</p>
+          </div>
+        </div>
+        <button type="button" id="settingsBtn" class="icon-btn" title="设置">⚙️</button>
+      </header>
+
+      <!-- 余额主卡片 -->
+      <div class="balance-card">
+        <div class="balance-card-inner">
+          <p class="balance-label">账户余额</p>
+          <div class="balance-amount">
+            <span class="currency">¥</span>
+            <span id="totalBalance" class="amount-number">--</span>
+          </div>
+          <div class="balance-details">
+            <div class="detail-item">
+              <span class="detail-dot recharge"></span>
+              <span class="detail-label">充值余额</span>
+              <span id="toppedUpBalance" class="detail-value">--</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-dot granted"></span>
+              <span class="detail-label">赠送余额</span>
+              <span id="grantedBalance" class="detail-value">--</span>
+            </div>
+          </div>
+        </div>
+        <!-- 装饰波纹 -->
+        <div class="card-wave"></div>
+      </div>
+
+      <!-- Token 用量卡片 -->
+      <div class="usage-card">
+        <div class="usage-header">
+          <h3>📊 可用 Token 估算</h3>
+          <span id="tokenPeriod" class="period-label">基于余额估算</span>
+        </div>
+
+        <!-- 总消耗量 -->
+        <div class="token-total-section">
+          <span id="tokenTotal" class="token-total-number">--</span>
+          <span class="token-total-unit">tokens</span>
+        </div>
+
+        <!-- 输入/输出明细 -->
+        <div class="token-breakdown">
+          <div class="token-item">
+            <span class="token-dot input-dot"></span>
+            <div class="token-item-info">
+              <span class="token-item-label">输入</span>
+              <span id="tokenInput" class="token-item-value">--</span>
+            </div>
+          </div>
+          <div class="token-divider"></div>
+          <div class="token-item">
+            <span class="token-dot output-dot"></span>
+            <div class="token-item-info">
+              <span class="token-item-label">输出</span>
+              <span id="tokenOutput" class="token-item-value">--</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 用量进度条 -->
+        <div class="usage-progress-section">
+          <div class="progress-bar-container">
+            <div id="tokenProgressBar" class="progress-bar-fill"></div>
+          </div>
+          <span id="tokenProgressPct" class="progress-text">--</span>
+        </div>
+
+        <!-- 更新时间 -->
+        <div class="usage-footer">
+          <span id="lastUpdated" class="update-time">--</span>
+        </div>
+      </div>
+
+      <!-- 操作按钮 -->
+      <div class="action-bar">
+        <button type="button" id="refreshBtn" class="btn btn-primary btn-full">
+          🔄 刷新数据
+        </button>
+      </div>
+
+      <!-- 底部信息 -->
+      <footer class="dashboard-footer">
+        <p id="accountStatus" class="account-status">--</p>
+      </footer>
+    </div>
+  </div>
+
+  <!-- ========== Toast 提示 ========== -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- Service Worker 注册 + 主逻辑 -->
+  <script src="js/app.js"></script>
+</body>
+</html>
